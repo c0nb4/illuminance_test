@@ -1,3 +1,5 @@
+import math
+
 class Window(object):
     """
     Methods:

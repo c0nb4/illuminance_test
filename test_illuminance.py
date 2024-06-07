@@ -2,19 +2,34 @@ import unittest
 import numpy as np
 import pandas as pd
 import pvlib 
+import math
 
 
-from DIBS import Window
-from districtgenerator import SunIlluminance
+from src.DIBS import Window
+from src.districtgenerator import SunIlluminance
 
 def read_epw_file(file_path):
     # Assuming EPW file format and extracting necessary columns
     # This function needs to be implemented to parse the EPW file correctly
-    weather_data = pd.read_csv(file_path, skiprows=8, header=None)
+    # Set EPW Labels and import epw file
+    epw_labels = ['year', 'month', 'day', 'hour', 'minute', 'datasource', 'drybulb_C', 'dewpoint_C',
+                      'relhum_percent',
+                      'atmos_Pa', 'exthorrad_Whm2', 'extdirrad_Whm2', 'horirsky_Whm2', 'glohorrad_Whm2',
+                      'dirnorrad_Whm2', 'difhorrad_Whm2', 'glohorillum_lux', 'dirnorillum_lux', 'difhorillum_lux',
+                      'zenlum_lux', 'winddir_deg', 'windspd_ms', 'totskycvr_tenths', 'opaqskycvr_tenths',
+                      'visibility_km',
+                      'ceiling_hgt_m', 'presweathobs', 'presweathcodes', 'precip_wtr_mm', 'aerosol_opt_thousandths',
+                      'snowdepth_cm', 'days_last_snow', 'Albedo', 'liq_precip_depth_mm', 'liq_precip_rate_Hour']
+
+    weather_data = pd.read_csv(
+            file_path, skiprows=8, header=None, names=epw_labels).drop('datasource', axis=1)
+
+    weather_data["timestamp"] = pd.to_datetime(weather_data[['year', 'month', 'day', 'hour', 'minute']])
+    
     sun_positions = pvlib.solarposition.get_solarposition(
-        time=weather_data[0],  # Placeholder for actual timestamp column
-        latitude=50.76,  # Placeholder for actual latitude
-        longitude=6.07   # Placeholder for actual longitude
+        time=weather_data['timestamp'], 
+        latitude=52.38080,  
+        longitude=13.53060   
     )
     return sun_positions, weather_data
 
@@ -27,8 +42,8 @@ class TestIlluminanceComparison(unittest.TestCase):
         hour_index = 12  # for example, noon
         sun_altitude = sun_positions['elevation'][hour_index]
         sun_azimuth = sun_positions['azimuth'][hour_index]
-        normal_direct_illuminance = weather_data[DIRECT_ILLUMINANCE_COLUMN][hour_index]  # Adjust column index
-        horizontal_diffuse_illuminance = weather_data[DIFFUSE_ILLUMINANCE_COLUMN][hour_index]  # Adjust column index
+        normal_direct_illuminance = weather_data['dirnorillum_lux'][hour_index]  # Adjust column index
+        horizontal_diffuse_illuminance = weather_data['difhorillum_lux'][hour_index]  # Adjust column index
 
         # Instantiate and run calculations as previously outlined
         window = Window(180, 90, 0.8, 1)
@@ -47,6 +62,7 @@ class TestIlluminanceComparison(unittest.TestCase):
             normal_direct_illuminance=np.array([normal_direct_illuminance]),
             horizontal_diffuse_illuminance=np.array([horizontal_diffuse_illuminance])
         )
-        
+        self.assertAlmostEqual(window.transmitted_illuminance, sun_illum_results[0], delta=5000, 
+                               msg="Calculations do not match withing toleracne.")
 if __name__ == '__main__':
     unittest.main()
