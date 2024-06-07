@@ -39,11 +39,11 @@ class TestIlluminanceComparison(unittest.TestCase):
         sun_positions, weather_data = read_epw_file(r'data\DEU_BE_Berlin-Schonefeld.AP.103850_TMYx.2004-2018.epw')
         
         # Use a specific hour or range of hours for testing
-        hour_index = 12  # for example, noon
+        hour_index = [0,22]
         sun_altitude = sun_positions['elevation'][hour_index]
         sun_azimuth = sun_positions['azimuth'][hour_index]
-        normal_direct_illuminance = weather_data['dirnorillum_lux'][hour_index]  # Adjust column index
-        horizontal_diffuse_illuminance = weather_data['difhorillum_lux'][hour_index]  # Adjust column index
+        normal_direct_illuminance = weather_data['dirnorillum_lux'][hour_index]  
+        horizontal_diffuse_illuminance = weather_data['difhorillum_lux'][hour_index]  #
 
         # Instantiate and run calculations as previously outlined
         window = Window(180, 90, 0.8, 1)
@@ -66,3 +66,4 @@ class TestIlluminanceComparison(unittest.TestCase):
                                msg="Calculations do not match withing toleracne.")
 if __name__ == '__main__':
     unittest.main()
+    # To-Do, check for timeseries and not only single values
